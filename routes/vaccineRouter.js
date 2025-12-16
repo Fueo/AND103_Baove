@@ -12,7 +12,7 @@ router.get("/list", async function (req, res) {
 });
 
 // DELETE: Xóa vaccine
-router.delete("/delete", async function (req, res) {
+router.post("/delete", async function (req, res) {
     try {
         const { id } = req.body;
 
