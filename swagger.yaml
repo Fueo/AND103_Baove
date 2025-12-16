@@ -1,0 +1,372 @@
+openapi: 3.1.0
+info:
+  title: API Documentation AND103
+  version: 1.0.0
+  description: Tài liệu API quản lý Sản phẩm, Danh mục và Hình ảnh
+servers:
+  - url: http://localhost:3001
+    description: Local Development Server
+
+# --- KHU VỰC ĐỊNH NGHĨA MODEL CHUNG (Schema) ---
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "654321..."
+        cateName:
+          type: string
+          example: "Laptop"
+        parentID:
+          type: string
+          example: ""
+    
+    ProductInput:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
+          type: string
+          example: "Macbook Air M2"
+        description:
+          type: string
+          example: "Máy tính xách tay Apple..."
+        price:
+          type: number
+          example: 25000000
+        quantity:
+          type: integer
+          example: 100
+        status:
+          type: boolean
+          example: true
+        cateID:
+          type: string
+          description: ID của danh mục
+          example: "654a..."
+
+# --- KHU VỰC ĐỊNH NGHĨA API (Paths) ---
+paths:
+  # ================= IMAGE API =================
+  /images/upload:
+    post:
+      summary: Upload 1 hình ảnh (Single)
+      tags: [Images]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                hinhAnh:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: Upload thành công, trả về link ảnh
+
+  /images/uploads:
+    post:
+      summary: Upload nhiều hình ảnh (Multiple - Max 9)
+      tags: [Images]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        200:
+          description: Upload thành công, trả về danh sách link
+
+  # ================= CATEGORY API =================
+  
+  /categories:
+    get:
+      summary: Lấy danh sách tất cả danh mục
+      tags: [Categories]
+      responses:
+        200:
+          description: Lấy danh sách thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Thành công"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Category'
+        500:
+          description: Lỗi server
+
+  /categories/add:
+    post:
+      summary: Thêm danh mục mới
+      tags: [Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cateName:
+                  type: string
+                  example: "Laptop"
+                parentID:
+                  type: string
+                  example: ""
+      responses:
+        200:
+          description: Thêm thành công
+        500:
+          description: Lỗi server
+
+  /categories/update:
+    put:
+      summary: Cập nhật danh mục
+      tags: [Categories]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: ID danh mục cần sửa
+                cateName:
+                  type: string
+                parentID:
+                  type: string
+      responses:
+        200:
+          description: Cập nhật thành công
+        500:
+          description: Lỗi server
+
+  /categories/delete/{id}:
+    delete:
+      summary: Xóa danh mục theo ID
+      tags: [Categories]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID của danh mục cần xóa
+      responses:
+        200:
+          description: Xóa thành công
+        500:
+          description: Lỗi server
+
+  # ================= PRODUCT API =================
+  /products/add:
+    post:
+      summary: Thêm sản phẩm mới
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        200:
+          description: Thêm thành công
+
+  /products/update:
+    put:
+      summary: Cập nhật sản phẩm
+      tags: [Products]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      description: ID sản phẩm (Bắt buộc)
+                - $ref: '#/components/schemas/ProductInput'
+      responses:
+        200:
+          description: Cập nhật thành công
+
+  /products/delete/{id}:
+    delete:
+      summary: Xóa sản phẩm theo ID
+      tags: [Products]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID sản phẩm cần xóa
+      responses:
+        200:
+          description: Xóa thành công
+
+  # --- CÁC API GET (CÂU HỎI MẪU) ---
+  # Đã gộp tag thành [Products]
+  
+  /products/cau1:
+    get:
+      summary: Câu 1 - Lấy dssp có giá > 100k HOẶC sl < 10
+      tags: [Products]
+      responses:
+        200:
+          description: Thành công
+
+  /products/cau15/{cateId}:
+    get:
+      summary: Câu 15 - Lấy dssp theo cateID (loại bỏ status false)
+      tags: [Products]
+      parameters:
+        - in: path
+          name: cateId
+          schema:
+            type: string
+          required: true
+          description: ID danh mục muốn lọc
+      responses:
+        200:
+          description: Thành công
+
+  /products/cau20/{cateId}:
+    get:
+      summary: Câu 20 - Lấy dssp theo cateID (chỉ lấy name, price, quantity)
+      tags: [Products]
+      parameters:
+        - in: path
+          name: cateId
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Thành công
+
+  # ================= USER API =================
+  /users/list:
+    get:
+      summary: Lấy danh sách tất cả User
+      tags: [Users]
+      responses:
+        200:
+          description: Lấy danh sách thành công
+        500:
+          description: Lỗi server
+
+  /users/add:
+    post:
+      summary: Đăng ký tài khoản
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        200:
+          description: Đăng ký thành công
+        500:
+          description: Lỗi server (Email trùng, lỗi DB...)
+
+  /users/login:
+    post:
+      summary: Đăng nhập
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "test@gmail.com"
+                password:
+                  type: string
+                  example: "123456"
+      responses:
+        200:
+          description: Đăng nhập thành công
+        500:
+          description: Lỗi server
+
+  /users/update:
+    put:
+      summary: Cập nhật thông tin User
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: ID user cần sửa
+                name:
+                  type: string
+                phone:
+                  type: string
+                status:
+                  type: boolean
+      responses:
+        200:
+          description: Cập nhật thành công
+        500:
+          description: Lỗi server
+
+  /users/delete/{id}:
+    delete:
+      summary: Xóa User theo ID
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: ID user cần xóa
+      responses:
+        200:
+          description: Xóa thành công
+        500:
+          description: Lỗi server
