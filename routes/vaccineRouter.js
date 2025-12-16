@@ -12,9 +12,9 @@ router.get("/list", async function (req, res) {
 });
 
 // DELETE: Xóa vaccine
-router.delete("/delete/:id", async function (req, res) {
+router.delete("/delete", async function (req, res) {
     try {
-        const { id } = req.params;
+        const { id } = req.body;
 
         // Kiểm tra xem có tồn tại không trước khi xóa
         const item = await vaccineModel.findById(id);
